@@ -20,6 +20,16 @@ img_gray = cv2.flip(img_gray, 1)
 
 plt.imshow(img_gray)
 
-plt.show()
+#plt.show()
 
-cv2.imwrite('tmp/test.jpg',img_gray)
+while True:
+
+    cv2.imshow('Photo',img_gray)
+
+    ## if has already passed one milisecond test if i'm pressind the end key
+    if cv2.waitKey(1) & 0xFF == 27:
+        break
+
+cv2.destroyAllWindows()
+
+# cv2.imwrite('tmp/test.jpg',img_gray)
