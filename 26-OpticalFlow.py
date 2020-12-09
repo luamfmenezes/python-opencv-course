@@ -2,62 +2,73 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
-# Viola-Jones Algorithm with Haar Cascades
 
-# Use the integral image
+# It's the patter of apparent motion of image objects between two consecutive frames caused by the movement of object
+# or camera
 
-nadia = cv2.imread('assets/images/Nadia_Murad.jpg',0)
-denis = cv2.imread('assets/images/Denis_Mukwege.jpg',0)
-conference = cv2.imread('assets/images/solvay_conference.jpg',0)
+# It make some assumptions
+# 1. The object does not change.
+# 2. Neighbouring pixels have similar motion.
 
-face_cascade = cv2.CascadeClassifier('assets/haarcascades/haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('assets/haarcascades/haarcascade_eye.xml')
+# Lukas canade 
+
+corner_track_params = dict(maxCorners=10,qualityLevel=0.3,minDistance=7,blockSize=7)
+
+# maxLevel -> resolution compression
+lk_params = dict(winSize=(200,200),maxLevel=2,criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
 cap = cv2.VideoCapture(0)
 
-def detect_face(img):
-    face_img = img.copy()
+ret, prev_frame = cap.read()
 
-    face_rectangles = face_cascade.detectMultiScale(face_img)
+prev_gray = cv2.cvtColor(prev_frame,cv2.COLOR_BGR2GRAY)
 
-    for (x,y,w,h) in face_rectangles:
-        cv2.rectangle(face_img, (x,y),(x+w,y+h), (255,255,0),10)
+# pts to track
+prevPts = cv2.goodFeaturesToTrack(prev_gray,mask=None, **corner_track_params)
 
-    return face_img
+# zeros size
+mask = np.zeros_like(prev_frame)
 
-def detect_eye(img):
-    eye_img = img.copy()
-
-    eye_rectangles = eye_cascade.detectMultiScale(eye_img)
-
-    for (x,y,w,h) in eye_rectangles:
-        cv2.rectangle(eye_img, (x,y),(x+w,y+h), (255,255,0),10)
-
-    return eye_img
-
-def normalized_detect_face(img):
-    face_img = img.copy()
-
-    face_rectangles = face_cascade.detectMultiScale(face_img, scaleFactor=1.2,minNeighbors=5)
-
-    for (x,y,w,h) in face_rectangles:
-        cv2.rectangle(face_img, (x,y),(x+w,y+h), (255,255,0),10)
-
-    return face_img
-
+plt.show()
 
 while True:
 
-    ret,frame = cap.read(0)
+    ret, frame = cap.read()
 
-    frame = detect_face(frame)
+    frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 
-    cv2.imshow('Video Face Detect',frame)
+    nextPts , status , err = cv2.calcOpticalFlowPyrLK(prev_gray,frame_gray,prevPts,None,)
 
-    key = cv2.waitKey(1)
+    good_new = nextPts[status==1]
+    good_prev = prevPts[status==1]
+
+    for i, (new,prev) in enumerate(zip(good_new,good_prev)):
+        # join more than one array
+        x_new , y_new = new.ravel() 
+        x_prev , y_prev = prev.ravel() 
+
+        mask = cv2.line(mask,(x_new,y_new),(x_prev,y_prev),(0,255,0),3)
+
+        frame = cv2.circle(frame,(x_new,y_new),8,(0,0,255),-1)
+
+    img = cv2.add(frame,mask)
+
+    cv2.imshow('tracking',img)
+
+    key = cv2.waitKey(30) & 0xFF
 
     if key == 27:
         break
 
+    prev_gray = frame_gray.copy()
+    prevPts = good_new.reshape(-1,1,2)
+
+
 cap.release()
 cv2.destroyAllWindows()
+
+
+
+
+
+
