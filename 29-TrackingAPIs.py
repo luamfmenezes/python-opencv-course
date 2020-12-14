@@ -53,7 +53,7 @@ while True:
         cv2.rectangle(frame,p1,p2, (0,255,0),3)
         cv2.putText(frame,"People", p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,0,0),2)
     else:
-        cv2.putText(frame,"Failure to detect traking !!", (100,200), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),3)
+        cv2.putText(frame,"Failure to detect traking !!", (100,200), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),3)
     
     cv2.putText(frame,tracker_name, (20,400), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0),3)
 
